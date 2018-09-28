@@ -6,26 +6,34 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ToDoList.Controllers
 {
+    using ToDoList.Interfaces;
+
     [Route("api/[controller]")]
     public class TaskController : Controller
     {
-        // GET api/values
-        [HttpGet]
-        public IEnumerable<string> Get()
+        private IDataStore dataStore;
+
+        public TaskController(IDataStore dataStore)
         {
-            return new string[] { "value1", "value2" };
+            this.dataStore = dataStore;
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("{userId:int}")]
+        public IActionResult Get([FromRoute] int userId)
         {
-            return "value";
+            var payload = this.dataStore.Read(userId);
+            if (payload == null)
+            {
+                return new NotFoundResult();
+            }
+
+            return new OkObjectResult(payload);
         }
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody]string value)
+        public void Post([FromBody] string value)
         {
         }
 

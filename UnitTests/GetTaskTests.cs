@@ -1,36 +1,38 @@
-﻿using System;
-
-namespace UnitTests
+﻿namespace UnitTests
 {
+    using System;
     using System.Collections.Generic;
+    using Microsoft.AspNetCore.Mvc;
     using Moq;
     using NUnit.Framework;
+    using ToDoList.Controllers;
+    using ToDoList.Interfaces;
+    using ToDoList.Models;
 
     public class GetTaskTests
     {
         [TestFixture]
         public class GetTodoListTests
         {
-
             [TestFixture]
             public class Given_A_Valid_Request
             {
                 [Test]
                 public void Then_An_OK_Response_Is_Returned()
                 {
-                    //Arrange
+                    // Arrange
                     List<UserTask> tasks = new List<UserTask>()
                     {
-                        new UserTask(){ UserId = 1234, TaskId = 1, Description = "Clean Dishes", DueBy = new DateTime(2018,12,01), Completed = false},
-                        new UserTask(){ UserId = 1234, TaskId = 2, Description = "Do homework", DueBy = new DateTime(2018,09,21), Completed = true}
+                        new UserTask { UserId = 1234, TaskId = 1, Description = "Clean Dishes", DueBy = new DateTime(2018, 12, 01), Completed = false},
+                        new UserTask { UserId = 1234, TaskId = 2, Description = "Do homework", DueBy = new DateTime(2018, 09, 21), Completed = true}
                     };
                     var dataStore = new Mock<IDataStore>();
                     dataStore.Setup(x => x.Read(1234)).Returns(tasks);
 
-                    //Act
-                    var getTodoList = new TodoListController(dataStore.Object);
+                    // Act
+                    var getTodoList = new TaskController(dataStore.Object);
 
-                    //Assert
+                    // Assert
                     var okResponse = getTodoList.Get(1234) as OkObjectResult;
                     Assert.That(okResponse, Is.Not.Null, "OkResponse is returning null");
                     var okResponseValue = okResponse.Value as List<UserTask>;
@@ -48,14 +50,14 @@ namespace UnitTests
                 [Test]
                 public void Then_An_OK_Response_Is_Returned()
                 {
-                    //Arrange
+                    // Arrange
                     var dataStore = new Mock<IDataStore>();
                     dataStore.Setup(x => x.Read(1234)).Returns(new List<UserTask>());
 
-                    //Act
-                    var getTodoList = new TodoListController(dataStore.Object);
+                    // Act
+                    var getTodoList = new TaskController(dataStore.Object);
 
-                    //Assert
+                    // Assert
                     var okResponse = getTodoList.Get(1234) as OkObjectResult;
                     Assert.That(okResponse, Is.Not.Null);
                     Assert.That(okResponse.Value, Is.Empty);
@@ -71,8 +73,8 @@ namespace UnitTests
                     var dataStore = new Mock<IDataStore>();
                     dataStore.Setup(x => x.Read(2345)).Returns((List<UserTask>)null);
 
-                    //Act
-                    var getTodoList = new TodoListController(dataStore.Object);
+                    // Act
+                    var getTodoList = new TaskController(dataStore.Object);
                     var httpResponseNotFound = getTodoList.Get(2345) as NotFoundResult;
                     Assert.That(httpResponseNotFound, Is.Not.Null, "httpResponseNotFound is returning null");
                 }
