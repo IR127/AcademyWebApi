@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Stubs\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 

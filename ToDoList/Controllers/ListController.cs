@@ -1,5 +1,6 @@
 ﻿namespace ToDoList.Controllers
 {
+    using System;
     using System.Net.Http;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -29,23 +30,30 @@
             return new OkObjectResult(payload);
         }
 
-        // PUT api/values/5
-        [HttpPut]
-        public IActionResult Put([FromBody] UserTask newTask)
+        // POST api/values/5
+        [HttpPost]
+        public IActionResult Post([FromBody] BasicTask task)
         {
-            var route = this.Request.Path.Value;
-            return new CreatedResult(route, newTask);
+            task.TaskId = Guid.NewGuid();
+
+            if (task.Description == null || task.Description.Length < 5)
+            {
+                return new BadRequestObjectResult("Description field cannot be empty/less than 5 characters");
+            }
+
+            var response = this.dataStore.Create(task);
+            if (response)
+            {
+                var route = this.Request.Path.Value;
+                return new CreatedResult(route, task);
+            }
+
+            return this.StatusCode(500);
         }
 
         // PATCH api/values
         [HttpPatch]
         public void Patch([FromBody] string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
         {
         }
     }
