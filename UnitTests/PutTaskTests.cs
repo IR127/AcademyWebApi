@@ -2,6 +2,9 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Net.Cache;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Http.Internal;
     using Microsoft.AspNetCore.Mvc;
     using Moq;
     using NUnit.Framework;
@@ -9,35 +12,37 @@
     using ToDoList.Interfaces;
     using ToDoList.Models;
 
-[TestFixture]
-public class GetTaskTests
-{
+    [TestFixture]
+    public class PutTaskTests
+    {
         [TestFixture]
         public class Given_A_Valid_Request
         {
             [Test]
-            public void Then_An_OK_Response_Is_Returned()
+            public void Then_An_Created_Response_Is_Returned()
             {
                 // Arrange
-                List<UserTask> tasks = new List<UserTask>()
+                var task = new UserTask
                 {
-                    new UserTask { UserId = 1234, TaskId = 1, Description = "Clean Dishes", DueBy = new DateTime(2018, 12, 01), Completed = false },
-                    new UserTask { UserId = 1234, TaskId = 2, Description = "Do homework", DueBy = new DateTime(2018, 09, 21), Completed = true }
+                    UserId = 1234,
+                    TaskId = 1,
+                    Description = "Clean Dishes",
+                    DueBy = new DateTime(2018, 12, 01),
+                    Completed = false
                 };
+
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Read(1234)).Returns(tasks);
+                dataStore.Setup(x => x.Create(It.IsAny<UserTask>())).Returns(true);
                 var listController = new ListController(dataStore.Object);
+                listController.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
+                listController.ControllerContext.HttpContext.Request.Path = $"/api/list/{task.UserId}";
 
                 // Act
-                var okObjectResult = listController.Get(1234) as OkObjectResult;
+                var createdResult = listController.Put(task) as CreatedResult;
 
                 // Assert
-                Assert.That(okObjectResult, Is.Not.Null, "OkResponse is returning null");
-                var okObjectResultValue = okObjectResult.Value as List<UserTask>;
-                Assert.That(okObjectResultValue, Is.Not.Null, "OkResponseValue is returning null");
-                Assert.That(okObjectResultValue.Count, Is.EqualTo(2));
-                Assert.That(okObjectResultValue[0].TaskId, Is.EqualTo(1));
-                Assert.That(okObjectResultValue[1].TaskId, Is.EqualTo(2));
+                Assert.That(createdResult, Is.Not.Null);
+                Assert.That(createdResult.Location, Is.EqualTo($"/api/list/{task.UserId}"));
             }
         }
 
@@ -53,11 +58,11 @@ public class GetTaskTests
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var okResult = listController.Get(1234) as OkObjectResult;
+                var okObjectResult = listController.Get(1234) as OkObjectResult;
 
                 // Assert
-                Assert.That(okResult, Is.Not.Null);
-                Assert.That(okResult.Value, Is.Empty);
+                Assert.That(okObjectResult, Is.Not.Null);
+                Assert.That(okObjectResult.Value, Is.Empty);
             }
         }
 
@@ -75,11 +80,9 @@ public class GetTaskTests
                 // Act
                 var notFoundResult = listController.Get(2345) as NotFoundResult;
 
-                // Aseert
+                // Assert
                 Assert.That(notFoundResult, Is.Not.Null, "httpResponseNotFound is returning null");
             }
         }
-
-    //TODO: Add verify test
     }
 }
