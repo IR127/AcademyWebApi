@@ -3,8 +3,6 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Net.Http;
-    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using ToDoList.Interfaces;
     using ToDoList.Models;
@@ -51,7 +49,7 @@
             return new OkObjectResult(tasks);
         }
 
-        // POST api/values/5
+        // POST api/values
         [HttpPost]
         public IActionResult Post([FromBody] BasicTask task)
         {
@@ -77,8 +75,21 @@
 
         // PATCH api/values
         [HttpPatch]
-        public void Patch([FromBody] string value)
+        public IActionResult Patch([FromBody] BasicTask task)
         {
+            if (task.Description.Length < 5)
+            {
+                return new BadRequestObjectResult("Description field cannot be empty/less than 5 characters");
+            }
+
+            var response = this.dataStore.Update(task);
+
+            if (!response)
+            {
+                return this.StatusCode(404);
+            }
+
+            return this.Ok();
         }
     }
 }

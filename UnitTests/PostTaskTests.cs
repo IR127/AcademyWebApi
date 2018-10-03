@@ -116,7 +116,7 @@
         public class Given_An_Invalid_Request_To_Create_A_Task
         {
             [Test]
-            public void When_Description_Is_Incorrect_Then_An_Bad_Request_Response_Is_Returned()
+            public void When_Description_Is_Short_Then_An_Bad_Request_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();

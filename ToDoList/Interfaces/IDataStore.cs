@@ -8,5 +8,7 @@
         IEnumerable<BasicTask> Read(int userId);
 
         bool Create(BasicTask task);
+
+        bool Update(BasicTask task);
     }
 }
