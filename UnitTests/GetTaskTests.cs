@@ -63,8 +63,8 @@
                 // Arrange
                 var tasks = new List<BasicTask>()
                 {
-                    new BasicTask { DueBy = new DateTime(2018, 08, 01) },
-                    new BasicTask { DueBy = DateTime.Now.AddHours(12) }
+                    new BasicTask { DueBy = new DateTime(2018, 08, 01), Added = new DateTime(2018, 10, 03, 13, 45, 0) },
+                    new BasicTask { DueBy = DateTime.Now.AddHours(12), Added = new DateTime(2018, 10, 02, 13, 45, 0) }
                 };
 
                 var dataStore = new Mock<IDataStore>();
@@ -90,11 +90,35 @@
             }
 
             [Test]
-            public void When_Returning_Tasks_To_Client_Then_Return_Whitin_24_Hours()
+            public void When_Returning_Tasks_To_Client_Then_Return_Within_24_Hours()
             {
                 var okObjectResultValue = this.ValidationSetup();
                 Assert.That(okObjectResultValue[0].DueWithin24, Is.EqualTo(true));
                 Assert.That(okObjectResultValue[1].DueWithin24, Is.EqualTo(false));
+            }
+
+            [Test]
+            public void When_Returning_Tasks_To_Client_Then_Return_Ordered_By_Added()
+            {
+                // Arrange
+                var tasks = new List<BasicTask>()
+                {
+                    new BasicTask { DueBy = new DateTime(2018, 08, 01), Added = new DateTime(2018, 10, 03, 13, 45, 0) },
+                    new BasicTask { DueBy = DateTime.Now.AddHours(12), Added = new DateTime(2018, 10, 02, 13, 45, 0) }
+                };
+
+                var dataStore = new Mock<IDataStore>();
+                dataStore.Setup(x => x.Read(It.IsAny<int>())).Returns(tasks);
+                var listController = new ListController(dataStore.Object);
+
+                // Act
+                var okObjectResult = listController.Get(1234) as OkObjectResult;
+
+                // Assert
+                Assert.That(okObjectResult, Is.Not.Null, "OkResponse is returning null");
+                var okObjectResultValue = okObjectResult.Value as List<AdvanceTask>;
+                Assert.That(okObjectResultValue, Is.Not.Null, "OkResponseValue is returning null");
+                Assert.That(okObjectResultValue[0].Added, Is.EqualTo(new DateTime(2018, 10, 02, 13, 45, 0)));
             }
         }
     }
