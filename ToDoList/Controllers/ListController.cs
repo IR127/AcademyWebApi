@@ -1,6 +1,7 @@
 ﻿namespace ToDoList.Controllers
 {
     using System;
+    using System.Collections.Generic;
     using System.Net.Http;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
@@ -24,10 +25,27 @@
             var payload = this.dataStore.Read(userId);
             if (payload == null)
             {
-                return new NotFoundResult();
+                return new NoContentResult();
             }
 
-            return new OkObjectResult(payload);
+            var tasks = new List<AdvanceTask>();
+
+            foreach (BasicTask basicTask in payload)
+            {
+                tasks.Add(new AdvanceTask()
+                {
+                    UserId = basicTask.UserId,
+                    TaskId = basicTask.TaskId,
+                    Description = basicTask.Description,
+                    DueBy = basicTask.DueBy,
+                    Completed = basicTask.Completed,
+                    Added = basicTask.Added,
+                    PastDueDate = DateTime.Now > basicTask.DueBy,
+                    DueWithin24 = DateTime.Compare(DateTime.Now, basicTask.DueBy) > 0 && DateTime.Compare(DateTime.Now, basicTask.DueBy) < 2
+                });
+            }
+
+            return new OkObjectResult(tasks);
         }
 
         // POST api/values/5
@@ -42,13 +60,15 @@
             }
 
             var response = this.dataStore.Create(task);
-            if (response)
+
+            if (!response)
             {
-                var route = this.Request.Path.Value;
-                return new CreatedResult(route, task);
+                return this.StatusCode(500);
             }
 
-            return this.StatusCode(500);
+            var route = this.Request.Path.Value;
+            return new CreatedResult(route, task);
+
         }
 
         // PATCH api/values

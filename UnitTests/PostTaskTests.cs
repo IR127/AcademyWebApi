@@ -106,6 +106,7 @@
                 var requestResult = listController.Post(new BasicTask() { Description = "Hello" }) as StatusCodeResult;
 
                 // Assert
+                Assert.That(requestResult, Is.Not.Null);
                 Assert.That(requestResult.StatusCode, Is.EqualTo(StatusCodes.Status500InternalServerError));
             }
         }

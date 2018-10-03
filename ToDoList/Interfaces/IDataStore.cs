@@ -5,7 +5,7 @@
 
     public interface IDataStore
     {
-        IEnumerable<AdvanceTask> Read(int userId);
+        IEnumerable<BasicTask> Read(int userId);
 
         bool Create(BasicTask task);
     }
