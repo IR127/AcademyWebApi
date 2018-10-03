@@ -12,8 +12,6 @@
     [TestFixture]
     public class PostTaskTests
     {
-        //TODO: Implement when the task was added.
-
         [TestFixture]
         public class Given_A_Valid_Request_To_Create_A_Task
         {
@@ -51,35 +49,6 @@
             }
 
             [Test]
-            public void When_A_Task_Id_Is_Included_Then_Repalce_With_Unique_Identifier()
-            {
-                // Arrange
-                var taskId = Guid.NewGuid();
-
-                var task = new BasicTask
-                {
-                    Description = "Hello",
-                    TaskId = taskId
-                };
-
-                var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(true);
-
-                var listController = new ListController(dataStore.Object);
-                listController.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
-                listController.ControllerContext.HttpContext.Request.Path = $"/api/list/{task.UserId}";
-
-                // Act
-                var createdResult = listController.Post(task) as CreatedResult;
-
-                // Assert
-                Assert.That(createdResult, Is.Not.Null);
-                var createdResultValue = createdResult.Value as BasicTask;
-                Assert.That(createdResultValue, Is.Not.Null);
-                Assert.That(createdResultValue.TaskId, Is.Not.EqualTo(taskId));
-            }
-
-            [Test]
             public void When_Creating_Then_The_Task_Is_Added_To_The_Persistent_Store()
             {
                 var task = new BasicTask
@@ -108,6 +77,38 @@
                 // Assert
                 Assert.That(requestResult, Is.Not.Null);
                 Assert.That(requestResult.StatusCode, Is.EqualTo(StatusCodes.Status500InternalServerError));
+            }
+
+            [Test]
+            public void When_Creating_Then_The_Added_Field_Is_Generated()
+            {
+                // Arrange
+                var randomDate = new DateTime(2018, 12, 01, 13, 10, 01);
+
+                var task = new BasicTask
+                {
+                    UserId = 1234,
+                    Description = "Clean Dishes",
+                    DueBy = new DateTime(2018, 12, 01),
+                    Completed = false,
+                    Added = randomDate
+                };
+
+                var dataStore = new Mock<IDataStore>();
+                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(true);
+
+                var listController = new ListController(dataStore.Object);
+                listController.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
+                listController.ControllerContext.HttpContext.Request.Path = $"/api/list/{task.UserId}";
+
+                // Act
+                var createdResult = listController.Post(task) as CreatedResult;
+
+                // Assert
+                Assert.That(createdResult, Is.Not.Null);
+                var createdResultValue = createdResult.Value as BasicTask;
+                Assert.That(createdResultValue, Is.Not.Null);
+                Assert.That(createdResultValue.Added, Is.Not.EqualTo(randomDate));
             }
         }
 

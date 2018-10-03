@@ -55,12 +55,13 @@
         [HttpPost]
         public IActionResult Post([FromBody] BasicTask task)
         {
-            task.TaskId = Guid.NewGuid();
 
             if (task.Description == null || task.Description.Length < 5)
             {
                 return new BadRequestObjectResult("Description field cannot be empty/less than 5 characters");
             }
+
+            task.Added = DateTime.Now;
 
             var response = this.dataStore.Create(task);
 
