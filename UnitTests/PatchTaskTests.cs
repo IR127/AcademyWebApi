@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace UnitTests
+﻿namespace UnitTests
 {
+    using System.Net;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Moq;
     using NUnit.Framework;
-    using NUnit.Framework.Internal;
     using ToDoList.Controllers;
     using ToDoList.Interfaces;
     using ToDoList.Models;
@@ -32,10 +28,10 @@ namespace UnitTests
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var okObjectResult = listController.Patch(task) as OkResult;
+                var okObjectResult = listController.Patch(task);
 
                 // Assert
-                Assert.That(okObjectResult, Is.Not.Null, "OkResponse is returning null");
+                Assert.That(okObjectResult, Is.InstanceOf<OkResult>());
             }
 
             [Test]
@@ -48,11 +44,10 @@ namespace UnitTests
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var requestResult = listController.Patch(new BasicTask { Description = "Clean Dishes" }) as StatusCodeResult;
+                var requestResult = listController.Patch(new BasicTask {Description = "Clean Dishes"});
 
                 // Assert
-                Assert.That(requestResult, Is.Not.Null);
-                Assert.That(requestResult.StatusCode, Is.EqualTo(StatusCodes.Status404NotFound));
+                Assert.That(requestResult, Is.InstanceOf<NotFoundResult>());
             }
 
             [Test]
@@ -86,10 +81,38 @@ namespace UnitTests
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var badRequestResult = listController.Patch(new BasicTask { Description = "Hell" }) as BadRequestObjectResult;
+                var badRequestResult = listController.Patch(new BasicTask {Description = "Hell"});
 
                 // Assert
-                Assert.That(badRequestResult, Is.Not.Null);
+                Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());
+            }
+
+            [Test]
+            public void When_Description_Is_Missing_Then_An_Bad_Request_Response_Is_Returned()
+            {
+                // Arrange
+                var dataStore = new Mock<IDataStore>();
+                var listController = new ListController(dataStore.Object);
+
+                // Act
+                var badRequestResult = listController.Patch(new BasicTask());
+
+                // Assert
+                Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());
+            }
+
+            [Test]
+            public void When_Task_Supplied_Is_Null_Then_An_Bad_Request_Response_Is_Returned()
+            {
+                // Arrange
+                var dataStore = new Mock<IDataStore>();
+                var listController = new ListController(dataStore.Object);
+
+                // Act
+                var badRequestResult = listController.Patch(null);
+
+                // Assert
+                Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());
             }
         }
     }

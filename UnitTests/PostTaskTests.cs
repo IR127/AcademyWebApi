@@ -72,11 +72,10 @@
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var requestResult = listController.Post(new BasicTask() { Description = "Hello" }) as StatusCodeResult;
+                var requestResult = listController.Post(new BasicTask() { Description = "Hello" });
 
                 // Assert
-                Assert.That(requestResult, Is.Not.Null);
-                Assert.That(requestResult.StatusCode, Is.EqualTo(StatusCodes.Status500InternalServerError));
+                Assert.That(requestResult, Is.InstanceOf<BadRequestObjectResult>());
             }
 
             [Test]
@@ -141,6 +140,20 @@
 
                 // Assert
                 Assert.That(badRequestResult, Is.Not.Null);
+            }
+
+            [Test]
+            public void When_Task_Supplied_Is_Null_Then_An_Bad_Request_Response_Is_Returned()
+            {
+                // Arrange
+                var dataStore = new Mock<IDataStore>();
+                var listController = new ListController(dataStore.Object);
+
+                // Act
+                var badRequestResult = listController.Post(null);
+
+                // Assert
+                Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());
             }
         }
     }

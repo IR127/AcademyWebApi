@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.Linq;
     using Microsoft.AspNetCore.Mvc;
     using ToDoList.Interfaces;
@@ -27,11 +28,7 @@
                 return new NoContentResult();
             }
 
-            var tasks = new List<AdvanceTask>();
-
-            foreach (BasicTask basicTask in payload)
-            {
-                tasks.Add(new AdvanceTask()
+            var tasks = payload.Select(basicTask => new AdvanceTask()
                 {
                     UserId = basicTask.UserId,
                     TaskId = basicTask.TaskId,
@@ -41,8 +38,8 @@
                     Added = basicTask.Added,
                     PastDueDate = DateTime.Now > basicTask.DueBy,
                     DueWithin24 = DateTime.Compare(DateTime.Now, basicTask.DueBy) > 0 && DateTime.Compare(DateTime.Now, basicTask.DueBy) < 2
-                });
-            }
+                })
+                .ToList();
 
             tasks = tasks.OrderBy(t => t.Added).ToList();
 
@@ -53,10 +50,14 @@
         [HttpPost]
         public IActionResult Post([FromBody] BasicTask task)
         {
+            if (task == null)
+            {
+                return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Input cannot be null" });
+            }
 
             if (task.Description == null || task.Description.Length < 5)
             {
-                return new BadRequestObjectResult("Description field cannot be empty/less than 5 characters");
+                return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Description field cannot be empty/less than 5 characters" });
             }
 
             task.Added = DateTime.Now;
@@ -65,28 +66,32 @@
 
             if (!response)
             {
-                return this.StatusCode(500);
+                return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Description field cannot be less than 5 characters" });
             }
 
             var route = this.Request.Path.Value;
             return new CreatedResult(route, task);
-
         }
 
         // PATCH api/values
         [HttpPatch]
         public IActionResult Patch([FromBody] BasicTask task)
         {
-            if (task.Description.Length < 5)
+            if (task == null)
             {
-                return new BadRequestObjectResult("Description field cannot be empty/less than 5 characters");
+                return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Input cannot be null" });
+            }
+
+            if (task.Description == null || task.Description.Length < 5)
+            {
+                return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Description field cannot be less than 5 characters" });
             }
 
             var response = this.dataStore.Update(task);
 
             if (!response)
             {
-                return this.StatusCode(404);
+                return this.NotFound();
             }
 
             return this.Ok();

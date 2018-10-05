@@ -6,6 +6,7 @@
 
     public class BasicTask
     {
+        [Required]
         public int UserId { get; set; }
 
         [BindNever]
@@ -19,6 +20,7 @@
 
         public bool Completed { get; set; }
 
+        [BindNever]
         public DateTime Added { get; set; }
     }
 }
