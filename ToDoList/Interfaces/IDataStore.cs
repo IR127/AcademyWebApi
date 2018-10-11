@@ -1,14 +1,17 @@
 ﻿namespace ToDoList.Interfaces
 {
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using Microsoft.Azure.Documents;
+    using Microsoft.Azure.Documents.Client;
     using ToDoList.Models;
 
     public interface IDataStore
     {
-        IEnumerable<BasicTask> Read(int userId);
+        Task<List<BasicTask>> Read(string userId);
 
-        bool Create(BasicTask task);
+        Task<bool> Create(BasicTask task);
 
-        bool Update(BasicTask task);
+        Task<bool> Update(BasicTask task);
     }
 }

@@ -3,6 +3,9 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.Azure.Documents;
+    using Microsoft.Azure.Documents.Client;
     using ToDoList.Interfaces;
     using ToDoList.Models;
 
@@ -14,44 +17,52 @@
             {
                 new BasicTask
                 {
-                    UserId = 1234,
+                    UserId = "1234",
                     TaskId = Guid.NewGuid(),
                     Description = "Clean Dishes",
                     DueBy = new DateTime(2018, 12, 01),
-                    Completed = false
+                    IsComplete = false
                 },
                 new BasicTask
                 {
-                    UserId = 1234,
+                    UserId = "1234",
                     TaskId = Guid.NewGuid(),
                     Description = "Do homework",
                     DueBy = new DateTime(2018, 09, 21),
-                    Completed = true
+                    IsComplete = true
                 },
                 new BasicTask
                 {
-                    UserId = 2345,
+                    UserId = "2345",
                     TaskId = Guid.NewGuid(),
                     Description = "Do homework",
                     DueBy = new DateTime(2018, 09, 21),
-                    Completed = true
+                    IsComplete = true
                 }
             };
         }
 
         public List<BasicTask> Tasks { get; set; }
 
-        public IEnumerable<BasicTask> Read(int userId)
+        public Task<List<BasicTask>> Read(string userId)
         {
-            return this.Tasks.Where(x => x.UserId == userId);
+            return Task.FromResult(this.Tasks.Where(x => x.UserId == userId.ToString()).ToList());
         }
 
-        public bool Create(BasicTask task)
+        public Task<bool> Create(BasicTask task)
         {
-            throw new NotImplementedException();
+            try
+            {
+                this.Tasks.Add(task);
+                return Task.FromResult(true);
+            }
+            catch
+            {
+                return Task.FromResult(false);
+            }
         }
 
-        public bool Update(BasicTask task)
+        public Task<bool> Update(BasicTask task)
         {
             throw new NotImplementedException();
         }

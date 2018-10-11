@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Moq;
@@ -17,20 +18,20 @@
         public class Given_A_Valid_Request_To_Get_All_Tasks
         {
             [Test]
-            public void When_A_User_Has_Tasks_Then_A_OK_Response_With_Tasks_Is_Returned()
+            public async Task When_A_User_Has_Tasks_Then_A_OK_Response_With_Tasks_Is_Returned()
             {
                 // Arrange
                 var tasks = new List<BasicTask>()
                 {
-                    new BasicTask { UserId = 1234, TaskId = Guid.NewGuid(), Description = "Clean Dishes", DueBy = new DateTime(2018, 12, 01), Completed = false },
-                    new BasicTask { UserId = 1234, TaskId = Guid.NewGuid(), Description = "Do homework", DueBy = new DateTime(2018, 09, 21), Completed = true }
+                    new BasicTask { UserId = "1234", TaskId = Guid.NewGuid(), Description = "Clean Dishes", DueBy = new DateTime(2018, 12, 01), IsComplete = false },
+                    new BasicTask { UserId = "1234", TaskId = Guid.NewGuid(), Description = "Do homework", DueBy = new DateTime(2018, 09, 21), IsComplete = true }
                 };
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Read(1234)).Returns(tasks);
+                dataStore.Setup(x => x.Read("1234")).Returns(Task.FromResult(tasks));
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var okObjectResult = listController.Get(1234) as OkObjectResult;
+                var okObjectResult = await listController.Get("1234") as OkObjectResult;
 
                 // Assert
                 Assert.That(okObjectResult, Is.Not.Null, "OkResponse is returning null");
@@ -42,15 +43,15 @@
             }
 
             [Test]
-            public void When_A_User_Has_No_Tasks_Then_A_No_Content_Response_Is_Returned()
+            public async Task When_A_User_Has_No_Tasks_Then_A_No_Content_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Read(It.IsAny<int>())).Returns((List<BasicTask>)null);
+                dataStore.Setup(x => x.Read(It.IsAny<string>())).Returns(Task.FromResult(new List<BasicTask>()));
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var noContentResult = listController.Get(1234) as NoContentResult;
+                var noContentResult = await listController.Get("1234") as NoContentResult;
 
                 // Assert
                 Assert.That(noContentResult, Is.Not.Null);
@@ -58,12 +59,13 @@
             }
 
             [Test]
-            public void When_Returing_Tasks_To_Client_Then_The_Task_Is_Added_To_The_Persistent_Store()
+            public async Task When_Returing_Tasks_To_Client_Then_The_Task_Is_Added_To_The_Persistent_Store()
             {
                 var dataStore = new Mock<IDataStore>();
+                dataStore.Setup(x => x.Read(It.IsAny<string>())).Returns(Task.FromResult(new List<BasicTask>()));
                 var listController = new ListController(dataStore.Object);
-                listController.Get(1234);
-                dataStore.Verify(x => x.Read(1234), Times.Once);
+                await listController.Get("1234");
+                dataStore.Verify(x => x.Read("1234"), Times.Once);
             }
         }
 
@@ -73,7 +75,7 @@
             private List<AdvanceTask> okObjectResultValue;
 
             [SetUp]
-            public void When_Returning_Tasks_To_Client()
+            public async Task When_Returning_Tasks_To_Client()
             {
                 // Arrange
                 var tasks = new List<BasicTask>()
@@ -83,11 +85,11 @@
                     };
 
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Read(It.IsAny<int>())).Returns(tasks);
+                dataStore.Setup(x => x.Read(It.IsAny<string>())).Returns(Task.FromResult(tasks));
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                if (listController.Get(1234) is OkObjectResult okObjectResult)
+                if (await listController.Get("1234") is OkObjectResult okObjectResult)
                 {
                     this.okObjectResultValue = okObjectResult.Value as List<AdvanceTask>;
                 }

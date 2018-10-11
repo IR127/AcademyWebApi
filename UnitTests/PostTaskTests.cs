@@ -1,6 +1,7 @@
 ﻿namespace UnitTests
 {
     using System;
+    using System.Threading.Tasks;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Moq;
@@ -16,26 +17,26 @@
         public class Given_A_Valid_Request_To_Create_A_Task
         {
             [Test]
-            public void When_Creating_Then_A_Created_Response_Is_Returned()
+            public async Task When_Creating_Then_A_Created_Response_Is_Returned()
             {
                 // Arrange
                 var task = new BasicTask
                 {
-                    UserId = 1234,
+                    UserId = "1234",
                     Description = "Clean Dishes",
                     DueBy = new DateTime(2018, 12, 01),
-                    Completed = false
+                    IsComplete = false
                 };
 
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(true);
+                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(Task.FromResult(true));
 
                 var listController = new ListController(dataStore.Object);
                 listController.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
                 listController.ControllerContext.HttpContext.Request.Path = $"/api/list/{task.UserId}";
 
                 // Act
-                var createdResult = listController.Post(task) as CreatedResult;
+                var createdResult = await listController.Post(task) as CreatedResult;
 
                 // Assert
                 Assert.That(createdResult, Is.Not.Null);
@@ -45,7 +46,7 @@
                 Assert.That(createdResultValue.UserId, Is.EqualTo(task.UserId), "User values don't match up");
                 Assert.That(createdResultValue.Description, Is.EqualTo(task.Description), "Description values do not match up");
                 Assert.That(createdResultValue.DueBy, Is.EqualTo(task.DueBy), "DueBy values do not match up");
-                Assert.That(createdResultValue.Completed, Is.EqualTo(task.Completed), "Completed values do not match up");
+                Assert.That(createdResultValue.IsComplete, Is.EqualTo(task.IsComplete), "isComplete values do not match up");
             }
 
             [Test]
@@ -63,45 +64,45 @@
             }
 
             [Test]
-            public void When_Persistant_Store_Fails_Then_A_Internal_Server_Error_Is_Returned()
+            public async Task When_Persistant_Store_Fails_Then_A_Bad_Request_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(false);
+                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(Task.FromResult(false));
 
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var requestResult = listController.Post(new BasicTask() { Description = "Hello" });
+                var requestResult = await listController.Post(new BasicTask() { Description = "Hello" });
 
                 // Assert
                 Assert.That(requestResult, Is.InstanceOf<BadRequestObjectResult>());
             }
 
             [Test]
-            public void When_Creating_Then_The_Added_Field_Is_Generated()
+            public async Task When_Creating_Then_The_Added_Field_Is_Generated()
             {
                 // Arrange
                 var randomDate = new DateTime(2018, 12, 01, 13, 10, 01);
 
                 var task = new BasicTask
                 {
-                    UserId = 1234,
+                    UserId = "1234",
                     Description = "Clean Dishes",
                     DueBy = new DateTime(2018, 12, 01),
-                    Completed = false,
+                    IsComplete = false,
                     Added = randomDate
                 };
 
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(true);
+                dataStore.Setup(x => x.Create(It.IsAny<BasicTask>())).Returns(Task.FromResult(true));
 
                 var listController = new ListController(dataStore.Object);
                 listController.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
                 listController.ControllerContext.HttpContext.Request.Path = $"/api/list/{task.UserId}";
 
                 // Act
-                var createdResult = listController.Post(task) as CreatedResult;
+                var createdResult = await listController.Post(task) as CreatedResult;
 
                 // Assert
                 Assert.That(createdResult, Is.Not.Null);
@@ -115,42 +116,42 @@
         public class Given_An_Invalid_Request_To_Create_A_Task
         {
             [Test]
-            public void When_Description_Is_Short_Then_An_Bad_Request_Response_Is_Returned()
+            public async Task When_Description_Is_Short_Then_An_Bad_Request_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var badRequestResult = listController.Post(new BasicTask { Description = "Hell" }) as BadRequestObjectResult;
+                var badRequestResult = await listController.Post(new BasicTask { Description = "Hell" }) as BadRequestObjectResult;
 
                 // Assert
                 Assert.That(badRequestResult, Is.Not.Null);
             }
 
             [Test]
-            public void When_Description_Is_Missing_Then_An_Bad_Request_Response_Is_Returned()
+            public async Task When_Description_Is_Missing_Then_An_Bad_Request_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var badRequestResult = listController.Post(new BasicTask()) as BadRequestObjectResult;
+                var badRequestResult = await listController.Post(new BasicTask()) as BadRequestObjectResult;
 
                 // Assert
                 Assert.That(badRequestResult, Is.Not.Null);
             }
 
             [Test]
-            public void When_Task_Supplied_Is_Null_Then_An_Bad_Request_Response_Is_Returned()
+            public async Task When_Task_Supplied_Is_Null_Then_An_Bad_Request_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var badRequestResult = listController.Post(null);
+                var badRequestResult = await listController.Post(null);
 
                 // Assert
                 Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());

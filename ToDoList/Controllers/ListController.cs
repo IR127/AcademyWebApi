@@ -2,8 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.ComponentModel.DataAnnotations;
     using System.Linq;
+    using System.Threading.Tasks;
+    using Microsoft.ApplicationInsights;
     using Microsoft.AspNetCore.Mvc;
     using ToDoList.Interfaces;
     using ToDoList.Models;
@@ -12,6 +15,7 @@
     public class ListController : Controller
     {
         private readonly IDataStore dataStore;
+        private readonly TelemetryClient telemetryClient = new TelemetryClient();
 
         public ListController(IDataStore dataStore)
         {
@@ -19,12 +23,13 @@
         }
 
         // GET api/values/5
-        [HttpGet("{userId:int}")]
-        public IActionResult Get([FromRoute] int userId)
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> Get([FromRoute] string userId)
         {
-            var payload = this.dataStore.Read(userId);
-            if (payload == null)
+            var payload = await this.dataStore.Read(userId);
+            if (!payload.Any())
             {
+                this.telemetryClient.TrackEvent($"[{userId}] : NoContent - User has no tasks");
                 return new NoContentResult();
             }
 
@@ -34,7 +39,7 @@
                     TaskId = basicTask.TaskId,
                     Description = basicTask.Description,
                     DueBy = basicTask.DueBy,
-                    Completed = basicTask.Completed,
+                    Completed = basicTask.IsComplete,
                     Added = basicTask.Added,
                     PastDueDate = DateTime.Now > basicTask.DueBy,
                     DueWithin24 = DateTime.Compare(DateTime.Now, basicTask.DueBy) > 0 && DateTime.Compare(DateTime.Now, basicTask.DueBy) < 2
@@ -43,57 +48,66 @@
 
             tasks = tasks.OrderBy(t => t.Added).ToList();
 
+            this.telemetryClient.TrackEvent($"[{userId}] : Ok - Tasks returned");
             return new OkObjectResult(tasks);
         }
 
         // POST api/values
         [HttpPost]
-        public IActionResult Post([FromBody] BasicTask task)
+        public async Task<IActionResult> Post([FromBody] BasicTask task)
         {
             if (task == null)
             {
+                this.telemetryClient.TrackEvent($"BadRequest - Invalid task ");
                 return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Input cannot be null" });
             }
 
             if (task.Description == null || task.Description.Length < 5)
             {
+                this.telemetryClient.TrackEvent($"[{task.UserId}] : BadRequest - Invalid description");
                 return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Description field cannot be empty/less than 5 characters" });
             }
 
             task.Added = DateTime.Now;
 
-            var response = this.dataStore.Create(task);
+            var response = await this.dataStore.Create(task);
 
             if (!response)
             {
-                return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Description field cannot be less than 5 characters" });
+                this.telemetryClient.TrackEvent($"[{task.UserId}] : BadRequest - Update Failed");
+                return new BadRequestObjectResult(new ErrorModel { ErrorCode = "UPDATE_FAILED", ErrorMessage = "Was not able to add a new task" });
             }
 
+            this.telemetryClient.TrackEvent($"[{task.UserId}] : CreatedResult - New task created");
             var route = this.Request.Path.Value;
             return new CreatedResult(route, task);
         }
 
         // PATCH api/values
         [HttpPatch]
-        public IActionResult Patch([FromBody] BasicTask task)
+        public async Task<IActionResult> Patch([FromBody] BasicTask task)
         {
             if (task == null)
             {
+                this.telemetryClient.TrackEvent($"BadRequest - Invalid task");
                 return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Input cannot be null" });
             }
 
             if (task.Description == null || task.Description.Length < 5)
             {
+                this.telemetryClient.TrackEvent($"[{task.UserId}] : BadRequest - Invalid description");
                 return new BadRequestObjectResult(new ErrorModel { ErrorCode = "INVALID_REQUEST", ErrorMessage = "Description field cannot be less than 5 characters" });
             }
 
-            var response = this.dataStore.Update(task);
+            var response = await this.dataStore.Update(task);
 
             if (!response)
             {
+                this.telemetryClient.TrackEvent($"[{task.UserId}] : NotFound - Cannot find user");
                 return this.NotFound();
             }
 
+            this.telemetryClient.TrackEvent($"[{task.UserId}] : Ok - Task updated");
             return this.Ok();
         }
     }

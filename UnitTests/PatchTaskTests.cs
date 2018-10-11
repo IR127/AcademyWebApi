@@ -1,7 +1,6 @@
 ﻿namespace UnitTests
 {
-    using System.Net;
-    using Microsoft.AspNetCore.Http;
+    using System.Threading.Tasks;
     using Microsoft.AspNetCore.Mvc;
     using Moq;
     using NUnit.Framework;
@@ -16,35 +15,35 @@
         public class Given_A_Valid_Request_To_Update_A_Task
         {
             [Test]
-            public void When_Updating_Then_Return_Ok_Response_Is_Returned()
+            public async Task When_Updating_Then_Return_Ok_Response_Is_Returned()
             {
                 var task = new BasicTask
                 {
-                    UserId = 1234,
+                    UserId = "1234",
                     Description = "Clean Dishes"
                 };
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Update(task)).Returns(true);
+                dataStore.Setup(x => x.Update(task)).Returns(Task.FromResult(true));
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var okObjectResult = listController.Patch(task);
+                var okObjectResult = await listController.Patch(task);
 
                 // Assert
                 Assert.That(okObjectResult, Is.InstanceOf<OkResult>());
             }
 
             [Test]
-            public void When_Persistant_Store_Cant_Find_Record_Then_A_Not_Found_Response_Is_Returned()
+            public async Task When_Persistant_Store_Cant_Find_Record_Then_A_Not_Found_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Update(It.IsAny<BasicTask>())).Returns(false);
+                dataStore.Setup(x => x.Update(It.IsAny<BasicTask>())).Returns(Task.FromResult(false));
 
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var requestResult = listController.Patch(new BasicTask {Description = "Clean Dishes"});
+                var requestResult = await listController.Patch(new BasicTask { Description = "Clean Dishes" });
 
                 // Assert
                 Assert.That(requestResult, Is.InstanceOf<NotFoundResult>());
@@ -74,42 +73,42 @@
         public class Given_An_Invalid_Request_To_Update_A_Task
         {
             [Test]
-            public void When_Description_Is_Short_Then_An_Bad_Request_Response_Is_Returned()
+            public async Task When_Description_Is_Short_Then_An_Bad_Request_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var badRequestResult = listController.Patch(new BasicTask {Description = "Hell"});
+                var badRequestResult = await listController.Patch(new BasicTask {Description = "Hell"});
 
                 // Assert
                 Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());
             }
 
             [Test]
-            public void When_Description_Is_Missing_Then_An_Bad_Request_Response_Is_Returned()
+            public async Task When_Description_Is_Missing_Then_An_Bad_Request_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var badRequestResult = listController.Patch(new BasicTask());
+                var badRequestResult = await listController.Patch(new BasicTask());
 
                 // Assert
                 Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());
             }
 
             [Test]
-            public void When_Task_Supplied_Is_Null_Then_An_Bad_Request_Response_Is_Returned()
+            public async Task When_Task_Supplied_Is_Null_Then_An_Bad_Request_Response_Is_Returned()
             {
                 // Arrange
                 var dataStore = new Mock<IDataStore>();
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var badRequestResult = listController.Patch(null);
+                var badRequestResult = await listController.Patch(null);
 
                 // Assert
                 Assert.That(badRequestResult, Is.InstanceOf<BadRequestObjectResult>());
