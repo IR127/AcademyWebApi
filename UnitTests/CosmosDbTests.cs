@@ -4,9 +4,11 @@ using System.Text;
 
 namespace UnitTests
 {
+    using System.IO;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using Microsoft.Azure.Documents.Client;
+    using Microsoft.Extensions.Configuration;
     using NUnit.Framework;
     using ToDoList.Concrete_Types;
     using ToDoList.Models;
@@ -14,11 +16,27 @@ namespace UnitTests
     [TestFixture]
     public class CosmosDbTests
     {
+        private CosmosDataStore cosmosDataStore;
+
+        [SetUp]
+        public void Setup()
+        {
+            var configBuilder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("secrets.json");
+
+            var config = configBuilder.Build();
+
+            var cosmosDataStoreSettings = new CosmosDataStoreSettings();
+            config.Bind(nameof(cosmosDataStoreSettings), cosmosDataStoreSettings);
+
+            this.cosmosDataStore = new CosmosDataStore(cosmosDataStoreSettings);
+        }
+
         [Test]
         public async Task Unsuccesfully_Read_Task_In_Database()
         {
-            var dataStore = new CosmosDataStore();
-            var response = await dataStore.Read(Guid.NewGuid().ToString());
+            var response = await this.cosmosDataStore.Read(Guid.NewGuid().ToString());
             Assert.That(response.Count, Is.EqualTo(0));
         }
 
@@ -35,11 +53,9 @@ namespace UnitTests
                 IsComplete = false
             };
 
-            var dataStore = new CosmosDataStore();
-
             // Act
-            await dataStore.Create(task);
-            var response = await dataStore.Read(task.UserId);
+            await this.cosmosDataStore.Create(task);
+            var response = await this.cosmosDataStore.Read(task.UserId);
 
             // Assert
             Assert.That(response.Count, Is.EqualTo(1));
@@ -67,12 +83,10 @@ namespace UnitTests
                 IsComplete = false
             };
 
-            var dataStore = new CosmosDataStore();
-
             // Act
-            await dataStore.Create(task);
-            await dataStore.Update(task2);
-            var response = await dataStore.Read(task2.UserId);
+            await this.cosmosDataStore.Create(task);
+            await this.cosmosDataStore.Update(task2);
+            var response = await this.cosmosDataStore.Read(task2.UserId);
 
             // Assert
             Assert.That(response[0].Description, Is.Not.EqualTo(task.Description));

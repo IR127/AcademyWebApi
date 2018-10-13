@@ -9,20 +9,19 @@
     using Microsoft.Azure.Documents.Client;
     using Microsoft.Azure.Documents.Linq;
     using Microsoft.Azure.Documents.SystemFunctions;
+    using Microsoft.Extensions.Options;
     using ToDoList.Interfaces;
     using ToDoList.Models;
 
     public class CosmosDataStore : IDataStore
     {
-        private const string EndpointUri = "https://todo-list.documents.azure.com:443/";
-        private const string PrimaryKey = "ZpghICykb5FTFTl8TBNqDb0760jrBXf10L70LPT0Mfss5CTX1vif0s4VBTRCdsXmJscum2oEKnpFJoR9hxVH6w==";
-        private DocumentClient client;
-        private FeedOptions queryOptions = new FeedOptions { MaxItemCount = -1 };
-        private TelemetryClient telemetryClient = new TelemetryClient();
+        private readonly DocumentClient client;
+        private readonly FeedOptions queryOptions = new FeedOptions { MaxItemCount = -1 };
+        private readonly TelemetryClient telemetryClient = new TelemetryClient();
 
-        public CosmosDataStore()
+        public CosmosDataStore(CosmosDataStoreSettings cosmosDataStoreSettings)
         {
-            this.client = new DocumentClient(new Uri(EndpointUri), PrimaryKey);
+            this.client = new DocumentClient(cosmosDataStoreSettings.EndpointUri, cosmosDataStoreSettings.PrimaryKey);
             this.client.CreateDatabaseIfNotExistsAsync(new Database { Id = "Task" }).Wait();
         }
 
