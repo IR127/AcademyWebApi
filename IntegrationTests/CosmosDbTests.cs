@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace UnitTests
+﻿namespace IntegrationTests
 {
+    using System;
     using System.IO;
-    using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
-    using Microsoft.Azure.Documents.Client;
     using Microsoft.Extensions.Configuration;
     using NUnit.Framework;
     using ToDoList.Concrete_Types;
