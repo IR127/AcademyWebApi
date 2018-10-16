@@ -1,6 +1,5 @@
 ﻿namespace ToDoList
 {
-    using System.IO;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -14,7 +13,7 @@
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
+                .AddJsonFile("secrets.json", true, true);
             this.Configuration = builder.Build();
         }
 
@@ -24,7 +23,8 @@
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddSingleton(this.Configuration.GetSection("CosmosDataStoreSettings").Get<CosmosDataStoreSettings>());
+            services.AddSingleton(this.Configuration.GetSection("CosmosDataStoreSettings")
+                .Get<CosmosDataStoreSettings>());
             services.AddSingleton<IDataStore, CosmosDataStore>();
         }
 

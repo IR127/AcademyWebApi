@@ -18,13 +18,43 @@
         public class Given_A_Valid_Request_To_Get_All_Tasks
         {
             [Test]
+            public async Task When_A_User_Has_No_Tasks_Then_A_No_Content_Response_Is_Returned()
+            {
+                // Arrange
+                var dataStore = new Mock<IDataStore>();
+                dataStore.Setup(x => x.Read(It.IsAny<string>())).Returns(Task.FromResult(new List<BasicTask>()));
+                var listController = new ListController(dataStore.Object);
+
+                // Act
+                var noContentResult = await listController.Get("1234") as NoContentResult;
+
+                // Assert
+                Assert.That(noContentResult, Is.Not.Null);
+                Assert.That(noContentResult.StatusCode, Is.EqualTo(StatusCodes.Status204NoContent));
+            }
+
+            [Test]
             public async Task When_A_User_Has_Tasks_Then_A_OK_Response_With_Tasks_Is_Returned()
             {
                 // Arrange
-                var tasks = new List<BasicTask>()
+                var tasks = new List<BasicTask>
                 {
-                    new BasicTask { UserId = "1234", TaskId = Guid.NewGuid(), Description = "Clean Dishes", DueBy = new DateTime(2018, 12, 01), IsComplete = false },
-                    new BasicTask { UserId = "1234", TaskId = Guid.NewGuid(), Description = "Do homework", DueBy = new DateTime(2018, 09, 21), IsComplete = true }
+                    new BasicTask
+                    {
+                        UserId = "1234",
+                        TaskId = Guid.NewGuid(),
+                        Description = "Clean Dishes",
+                        DueBy = new DateTime(2018, 12, 01),
+                        IsComplete = false
+                    },
+                    new BasicTask
+                    {
+                        UserId = "1234",
+                        TaskId = Guid.NewGuid(),
+                        Description = "Do homework",
+                        DueBy = new DateTime(2018, 09, 21),
+                        IsComplete = true
+                    }
                 };
                 var dataStore = new Mock<IDataStore>();
                 dataStore.Setup(x => x.Read("1234")).Returns(Task.FromResult(tasks));
@@ -43,22 +73,6 @@
             }
 
             [Test]
-            public async Task When_A_User_Has_No_Tasks_Then_A_No_Content_Response_Is_Returned()
-            {
-                // Arrange
-                var dataStore = new Mock<IDataStore>();
-                dataStore.Setup(x => x.Read(It.IsAny<string>())).Returns(Task.FromResult(new List<BasicTask>()));
-                var listController = new ListController(dataStore.Object);
-
-                // Act
-                var noContentResult = await listController.Get("1234") as NoContentResult;
-
-                // Assert
-                Assert.That(noContentResult, Is.Not.Null);
-                Assert.That(noContentResult.StatusCode, Is.EqualTo(StatusCodes.Status204NoContent));
-            }
-
-            [Test]
             public async Task When_Returing_Tasks_To_Client_Then_The_Task_Is_Added_To_The_Persistent_Store()
             {
                 var dataStore = new Mock<IDataStore>();
@@ -72,17 +86,15 @@
         [TestFixture]
         public class Given_A_Request_To_View_All_Tasks
         {
-            private List<AdvanceTask> okObjectResultValue;
-
             [SetUp]
             public async Task When_Returning_Tasks_To_Client()
             {
                 // Arrange
-                var tasks = new List<BasicTask>()
-                    {
-                        new BasicTask { DueBy = new DateTime(2018, 08, 01), Added = new DateTime(2018, 10, 03, 13, 45, 0) },
-                        new BasicTask { DueBy = DateTime.Now.AddHours(12), Added = new DateTime(2018, 10, 02, 13, 45, 0) }
-                    };
+                var tasks = new List<BasicTask>
+                {
+                    new BasicTask {DueBy = new DateTime(2018, 08, 01), Added = new DateTime(2018, 10, 03, 13, 45, 0)},
+                    new BasicTask {DueBy = DateTime.Now.AddHours(12), Added = new DateTime(2018, 10, 02, 13, 45, 0)}
+                };
 
                 var dataStore = new Mock<IDataStore>();
                 dataStore.Setup(x => x.Read(It.IsAny<string>())).Returns(Task.FromResult(tasks));
@@ -90,10 +102,10 @@
 
                 // Act
                 if (await listController.Get("1234") is OkObjectResult okObjectResult)
-                {
                     this.okObjectResultValue = okObjectResult.Value as List<AdvanceTask>;
-                }
             }
+
+            private List<AdvanceTask> okObjectResultValue;
 
             [Test]
             public void Then_Return_Ordered_By_Added()

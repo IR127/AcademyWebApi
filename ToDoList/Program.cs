@@ -2,8 +2,6 @@
 {
     using Microsoft.AspNetCore;
     using Microsoft.AspNetCore.Hosting;
-    using System;
-    using System.Net;
 
     public class Program
     {
