@@ -44,11 +44,9 @@
                 var createdResultValue = createdResult.Value as BasicTask;
                 Assert.That(createdResultValue, Is.Not.Null);
                 Assert.That(createdResultValue.UserId, Is.EqualTo(task.UserId), "User values don't match up");
-                Assert.That(createdResultValue.Description, Is.EqualTo(task.Description),
-                    "Description values do not match up");
+                Assert.That(createdResultValue.Description, Is.EqualTo(task.Description), "Description values do not match up");
                 Assert.That(createdResultValue.DueBy, Is.EqualTo(task.DueBy), "DueBy values do not match up");
-                Assert.That(createdResultValue.IsComplete, Is.EqualTo(task.IsComplete),
-                    "isComplete values do not match up");
+                Assert.That(createdResultValue.IsComplete, Is.EqualTo(task.IsComplete), "isComplete values do not match up");
             }
 
             [Test]
