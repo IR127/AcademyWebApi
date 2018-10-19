@@ -26,7 +26,7 @@
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var noContentResult = await listController.Get("1234") as NoContentResult;
+                var noContentResult = await listController.GetByUserId("1234") as NoContentResult;
 
                 // Assert
                 Assert.That(noContentResult, Is.Not.Null);
@@ -61,7 +61,7 @@
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                var okObjectResult = await listController.Get("1234") as OkObjectResult;
+                var okObjectResult = await listController.GetByUserId("1234") as OkObjectResult;
 
                 // Assert
                 Assert.That(okObjectResult, Is.Not.Null, "OkResponse is returning null");
@@ -78,7 +78,7 @@
                 var dataStore = new Mock<IDataStore>();
                 dataStore.Setup(x => x.Read(It.IsAny<string>())).Returns(Task.FromResult(new List<BasicTask>()));
                 var listController = new ListController(dataStore.Object);
-                await listController.Get("1234");
+                await listController.GetByUserId("1234");
                 dataStore.Verify(x => x.Read("1234"), Times.Once);
             }
         }
@@ -101,7 +101,7 @@
                 var listController = new ListController(dataStore.Object);
 
                 // Act
-                if (await listController.Get("1234") is OkObjectResult okObjectResult)
+                if (await listController.GetByUserId("1234") is OkObjectResult okObjectResult)
                     this.okObjectResultValue = okObjectResult.Value as List<AdvanceTask>;
             }
 

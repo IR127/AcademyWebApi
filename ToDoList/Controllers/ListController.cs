@@ -22,9 +22,16 @@
             this.dataStore = dataStore;
         }
 
+        // GET api/values
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            return await Task.FromResult(new OkResult());
+        }
+
         // GET api/values/5
         [HttpGet("{userId}")]
-        public async Task<IActionResult> Get([FromRoute] string userId)
+        public async Task<IActionResult> GetByUserId([FromRoute] string userId)
         {
             var payload = await this.dataStore.Read(userId);
             if (!payload.Any())
