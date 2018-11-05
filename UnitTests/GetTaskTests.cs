@@ -102,7 +102,9 @@
 
                 // Act
                 if (await listController.GetByUserId("1234") is OkObjectResult okObjectResult)
+                {
                     this.okObjectResultValue = okObjectResult.Value as List<AdvanceTask>;
+                }
             }
 
             private List<AdvanceTask> okObjectResultValue;

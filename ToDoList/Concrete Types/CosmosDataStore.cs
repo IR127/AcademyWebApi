@@ -8,8 +8,6 @@
     using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.Client;
     using Microsoft.Azure.Documents.Linq;
-    using Microsoft.Azure.Documents.SystemFunctions;
-    using Microsoft.Extensions.Options;
     using ToDoList.Interfaces;
     using ToDoList.Models;
 
@@ -22,7 +20,13 @@
         public CosmosDataStore(CosmosDataStoreSettings cosmosDataStoreSettings)
         {
             this.client = new DocumentClient(cosmosDataStoreSettings.EndpointUri, cosmosDataStoreSettings.PrimaryKey);
+
+            DocumentCollection collectionDefinition = new DocumentCollection();
+            collectionDefinition.Id = "Items";
+            collectionDefinition.PartitionKey.Paths.Add("/UserId");
             this.client.CreateDatabaseIfNotExistsAsync(new Database { Id = "Task" }).Wait();
+            // https://docs.microsoft.com/en-us/azure/cosmos-db/sql-api-partition-data
+            this.client.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri("Task"), collectionDefinition).Wait();
         }
 
         public async Task<List<BasicTask>> Read(string userId)
